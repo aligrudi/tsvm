@@ -1,0 +1,81 @@
+TSVM
+====
+
+This is a simple virtual machine for the intermediate code of TSLANG
+(The Simple Language), written for an undergraduate compiler course.
+Students are required to write a compiler for TSLANG to generate
+TSLANG IR.  As optional projects, students may optimise the size of
+the generated code, write a back end pass, or generate machine code
+from TSLANG IR.
+
+TSLANG IR
+=========
+
+Each file consists of one or more procedures; tsvm starts the
+execution from a procedure named main.  Each invocation of a procedure
+has a private set of registers.  The name of a register is the letter
+r followed by its identifier; for instance, r11 denotes the 11th
+register.  A procedure can be defined with the proc keyword as
+follows:
+
+  proc main
+    mov  r1, 2
+    mul  r2, r1, r0
+    mov  r0, 0
+    ret
+
+A procedure may take a number of arguments; when it is called, the
+i-th argument is copied into the i-th register (r0 is the first
+argument).  The return value is read from r0 when the function returns
+and, if specified, is written to the first operand of the call
+instruction (the same register that holds the first argument).  In the
+following program, sum3 returns the sum of its three argument.
+
+  proc sum3
+    add r0, r1, r2
+    add r0, r0, r3
+    ret
+  proc main
+    call iget, r3
+    call iget, r1
+    call iget, r2
+    call sum3, r3, r1, r2
+    call iput, r3
+    mov  r0, 0
+    ret
+
+TSLANG IR instructions include mov, add, sub, mul, div, mod, cmp<,
+cmp>, cmp==, cmp<=, cmp>=, get, put, ret, call, jmp, jz, jnz.  See the
+files in the test/ directory for more examples.
+
+BUILTIN PROCEDURES
+==================
+
+The iget builtin procedure reads a word from the standard input and
+iput writes the a word to the standard output.  The following program
+reads a word and after multiplying it by 2, prints it to the standard
+output.
+
+  proc main
+    call iget, r0
+    mov  r1, 2
+    mul  r2, r1, r0
+    call iput, r2
+    mov  r0, 0
+    ret
+
+The mem builtin procedure allocates a memory region with the size
+specified as its first argument and returns its address.  The rel
+instruction frees the given memory region.  The following program
+allocates 32 bytes of memory and releases it.  It also demonstrates
+get and put instructions for accessing the memory region.
+
+  proc main
+    mov  r1, 32
+    call mem, r1
+    mov  r2, 5
+    put  r1, r2		# write r2 to *r1
+    get  r3, r1		# read r3 from *r1
+    call rel, r1
+    mov  r0, 0
+    ret
