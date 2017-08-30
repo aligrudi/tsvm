@@ -1,0 +1,4 @@
+proc main
+	call iget, r0
+	call iput, r0
+	ret

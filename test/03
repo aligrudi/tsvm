@@ -1,0 +1,7 @@
+proc main
+	mov r0, 2
+	jmp out
+	mov r0, 3
+out:
+	call iput, r0
+	ret

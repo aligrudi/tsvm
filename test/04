@@ -1,0 +1,10 @@
+proc main
+	call iget, r0
+	call iget, r1
+	cmp< r2, r0, r1
+	jz r2, out
+	call iput, r0
+	ret
+out:
+	call iput, r1
+	ret

@@ -1,0 +1,8 @@
+# functions
+proc five
+	mov r0, 5
+	ret
+proc main
+	call five, r0
+	call iput, r0
+	ret

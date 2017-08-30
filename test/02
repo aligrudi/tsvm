@@ -1,0 +1,6 @@
+proc main
+	call iget, r0
+	call iget, r1
+	add r2, r0, r1
+	call iput, r2
+	ret
