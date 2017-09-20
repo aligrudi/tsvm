@@ -30,6 +30,7 @@
 struct tsop {
 	char op[NCHRS];			/* operation name */
 	char args[NARGS][NCHRS];	/* operands */
+	int lnum;			/* line number */
 };
 
 /* TSLANG labels and procedures */
@@ -39,34 +40,43 @@ struct tsloc {
 };
 
 static FILE *fp;		/* program input */
+static int fp_lnum = 1;		/* the current line number */
+static char *fp_path;		/* the current file */
+static char fp_back = -1;	/* the character pushed backed via back() */
 
 static struct tsop *code;	/* program instructions */
-static int code_n;		/* number of instructions */
-static int code_sz;		/* size of code[] */
+static int code_n;		/* the number of instructions */
+static int code_sz;		/* the size of code[] */
 
 static struct tsloc *locs;	/* program labels and procedures */
-static int locs_n;		/* number of items in locs[] */
-static int locs_sz;		/* size of locs[] */
+static int locs_n;		/* the number of items in locs[] */
+static int locs_sz;		/* the size of locs[] */
 
 static long *regs;		/* machine registers */
-static int regs_n;		/* last machine register accessed */
-static int regs_sz;		/* size of regs[] */
+static int regs_n;		/* the last machine register accessed */
+static int regs_sz;		/* the size of regs[] */
 static int regs_off;		/* the offset of accessing regs[] */
 
 /* read the next character from the source program */
 static int next(void)
 {
-	int c = fgetc(fp);
+	int c = fp_back;
+	fp_back = -1;
+	if (c >= 0)
+		return c;
+	c = fgetc(fp);
 	if (c == '#')
 		while (c != EOF && c != '\n')
 			c = fgetc(fp);
+	if (c == '\n')
+		fp_lnum++;
 	return c;
 }
 
 /* unget the last character read via next() */
 static void back(int c)
 {
-	ungetc(c, fp);
+	fp_back = c;
 }
 
 /* skip the characters specified */
@@ -133,7 +143,7 @@ static void die(char *fmt, ...)
 	va_start(ap, fmt);
 	vsprintf(msg, fmt, ap);
 	va_end(ap);
-	fprintf(stderr, "tsvm: %s\n", msg);
+	fprintf(stderr, "tsvm:%s:%d: %s\n", fp_path, fp_lnum, msg);
 	exit(1);
 }
 
@@ -173,6 +183,7 @@ static int readprogram(void)
 			nextword(locs[locs_n].name, " \t\r\n;");
 			locs_n++;
 		} else {
+			code[code_n].lnum = fp_lnum;
 			strcpy(code[code_n].op, cmd);
 			if (!nextarguments(fp, code[code_n].args))
 				code_n++;
@@ -220,6 +231,8 @@ static void regset_direct(int r, long val)
 /* read the value of the given register in the current frame */
 static long regget(int r)
 {
+	if (r < 0)
+		die("bad register identifier");
 	r += regs_off;
 	regget_direct(r);
 	if (r >= regs_n)
@@ -271,6 +284,7 @@ static int execproc(char *name)
 	regs_off = regs_n;
 	while (ip < code_n) {
 		char *op = code[ip].op;
+		fp_lnum = code[ip].lnum;
 		r0 = regnum(code[ip].args[0]);
 		r1 = regnum(code[ip].args[1]);
 		r2 = regnum(code[ip].args[2]);
@@ -347,9 +361,10 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "usage: %s file.t\n", argv[0]);
 		return 1;
 	}
-	fp = fopen(argv[1], "r");
+	fp_path = argv[1];
+	fp = fopen(fp_path, "r");
 	if (!fp) {
-		fprintf(stderr, "tsvm: cannot open %s\n", argv[1]);
+		fprintf(stderr, "tsvm: cannot open %s\n", fp_path);
 		return 1;
 	}
 	readprogram();
