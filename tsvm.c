@@ -22,7 +22,7 @@
 #include <string.h>
 
 #define NCHRS		(1 << 5)	/* token length */
-#define NARGS		(1 << 5)	/* number of arguments */
+#define NARGS		(1 << 5)	/* the number of arguments */
 
 #define MAX(a, b)	((a) < (b) ? (b) : (a))
 
@@ -47,6 +47,10 @@ static char fp_back = -1;	/* the character pushed backed via back() */
 static struct tsop *code;	/* program instructions */
 static int code_n;		/* the number of instructions */
 static int code_sz;		/* the size of code[] */
+
+static int stat_all;		/* the number of instructions executed */
+static int stat_call;		/* the number of call instructions */
+static int stat_jmp;		/* the number of branch instructions */
 
 static struct tsloc *locs;	/* program labels and procedures */
 static int locs_n;		/* the number of items in locs[] */
@@ -285,6 +289,7 @@ static int execproc(char *name)
 	for (; ip < code_n; ip++) {
 		char *op = code[ip].op;
 		fp_lnum = code[ip].lnum;
+		stat_all++;
 		r0 = regnum(code[ip].args[0]);
 		r1 = regnum(code[ip].args[1]);
 		r2 = regnum(code[ip].args[2]);
@@ -334,6 +339,8 @@ static int execproc(char *name)
 			*(long *) regget(r0) = regget(r1);
 			continue;
 		}
+		if (!strcmp("nop", op))
+			continue;
 		if (!strcmp("ret", op))
 			break;
 		if (!strcmp("call", op)) {
@@ -342,6 +349,7 @@ static int execproc(char *name)
 				if (r >= 0)
 					regset_direct(regs_n + i - 1, regget(r));
 			}
+			stat_call++;
 			if (execproc_builtin(code[ip].args[0]))
 				execproc(code[ip].args[0]);
 			if (r1 >= 0)
@@ -351,6 +359,7 @@ static int execproc(char *name)
 		if (!strcmp("jz", op) || !strcmp("jnz", op) || !strcmp("jmp", op)) {
 			char *label = code[ip].args[!strcmp("jmp", op) ? 0 : 1];
 			dst = locs_find(label);
+			stat_jmp++;
 			if (dst < 0)
 				die("label %s not found", label);
 			if (!strcmp("jz", op) && regget(r0) == 0)
@@ -370,12 +379,26 @@ static int execproc(char *name)
 
 int main(int argc, char *argv[])
 {
+	int showstat = 0;
 	int ret;
-	if (argc < 2) {
-		fprintf(stderr, "usage: %s file.t\n", argv[0]);
+	int i;
+	for (i = 1; i < argc && argv[i][0] == '-'; i++) {
+		switch (argv[i][1]) {
+		case 's':
+			showstat = 1;
+			break;
+		default:
+			printf("Usage: tsvm [options] file.ts <input >output\n\n");
+			printf("Options:\n");
+			printf("  -s      \t print program statistics\n");
+			return 1;
+		}
+	}
+	if (i >= argc) {
+		fprintf(stderr, "usage: %s file.ts\n", argv[0]);
 		return 1;
 	}
-	fp_path = argv[1];
+	fp_path = argv[i];
 	fp = fopen(fp_path, "r");
 	if (!fp) {
 		fprintf(stderr, "tsvm: cannot open %s\n", fp_path);
@@ -384,6 +407,9 @@ int main(int argc, char *argv[])
 	readprogram();
 	fclose(fp);
 	ret = execproc("main");
+	if (showstat)
+		fprintf(stderr, "%d\t%d\t%d\t%d\n",
+				code_n, stat_all, stat_call, stat_jmp);
 	free(code);
 	free(locs);
 	free(regs);
