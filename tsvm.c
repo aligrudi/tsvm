@@ -331,9 +331,10 @@ static int execproc(char *name)
 				regset(r1, regget_direct(regs_n));
 		}
 		if (!strcmp("jz", op) || !strcmp("jnz", op) || !strcmp("jmp", op)) {
-			dst = locs_find(code[ip].args[!strcmp("jmp", op) ? 0 : 1]);
+			char *label = code[ip].args[!strcmp("jmp", op) ? 0 : 1];
+			dst = locs_find(label);
 			if (dst < 0)
-				die("label %s not found", code[ip].args[0]);
+				die("label %s not found", label);
 		}
 		if (!strcmp("jz", op) && regget(r0) == 0) {
 			ip = dst;
