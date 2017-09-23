@@ -282,24 +282,36 @@ static int execproc(char *name)
 	if (ip < 0)
 		die("procedure %s not found", name);
 	regs_off = regs_n;
-	while (ip < code_n) {
+	for (; ip < code_n; ip++) {
 		char *op = code[ip].op;
 		fp_lnum = code[ip].lnum;
 		r0 = regnum(code[ip].args[0]);
 		r1 = regnum(code[ip].args[1]);
 		r2 = regnum(code[ip].args[2]);
-		if (!strcmp("mov", op))
+		if (!strcmp("mov", op)) {
 			regset(r0, r1 < 0 ? atoi(code[ip].args[1]) : regget(r1));
-		if (!strcmp("add", op))
+			continue;
+		}
+		if (!strcmp("add", op)) {
 			regset(r0, regget(r1) + regget(r2));
-		if (!strcmp("sub", op))
+			continue;
+		}
+		if (!strcmp("sub", op)) {
 			regset(r0, regget(r1) - regget(r2));
-		if (!strcmp("mul", op))
+			continue;
+		}
+		if (!strcmp("mul", op)) {
 			regset(r0, regget(r1) * regget(r2));
-		if (!strcmp("div", op))
+			continue;
+		}
+		if (!strcmp("div", op)) {
 			regset(r0, regget(r1) / regget(r2));
-		if (!strcmp("mod", op))
+			continue;
+		}
+		if (!strcmp("mod", op)) {
 			regset(r0, regget(r1) % regget(r2));
+			continue;
+		}
 		if (op[0] == 'c' && op[1] == 'm' && op[2] == 'p') {
 			char *cmp = op + 3;
 			if (!strcmp("<", cmp))
@@ -312,11 +324,16 @@ static int execproc(char *name)
 				regset(r0, regget(r1) >= regget(r2));
 			if (!strcmp("=", cmp) || !strcmp("==", cmp))
 				regset(r0, regget(r1) == regget(r2));
+			continue;
 		}
-		if (!strcmp("get", op))			/* read from memory */
+		if (!strcmp("get", op)) {		/* read from memory */
 			regset(r0, *(long *) regget(r1));
-		if (!strcmp("put", op))			/* write to memory */
+			continue;
+		}
+		if (!strcmp("put", op)) {		/* write to memory */
 			*(long *) regget(r0) = regget(r1);
+			continue;
+		}
 		if (!strcmp("ret", op))
 			break;
 		if (!strcmp("call", op)) {
@@ -329,26 +346,22 @@ static int execproc(char *name)
 				execproc(code[ip].args[0]);
 			if (r1 >= 0)
 				regset(r1, regget_direct(regs_n));
+			continue;
 		}
 		if (!strcmp("jz", op) || !strcmp("jnz", op) || !strcmp("jmp", op)) {
 			char *label = code[ip].args[!strcmp("jmp", op) ? 0 : 1];
 			dst = locs_find(label);
 			if (dst < 0)
 				die("label %s not found", label);
-		}
-		if (!strcmp("jz", op) && regget(r0) == 0) {
-			ip = dst;
+			if (!strcmp("jz", op) && regget(r0) == 0)
+				ip = dst - 1;
+			if (!strcmp("jnz", op) && regget(r0) != 0)
+				ip = dst - 1;
+			if (!strcmp("jmp", op))
+				ip = dst - 1;
 			continue;
 		}
-		if (!strcmp("jnz", op) && regget(r0) != 0) {
-			ip = dst;
-			continue;
-		}
-		if (!strcmp("jmp", op)) {
-			ip = dst;
-			continue;
-		}
-		ip++;
+		die("instruction %s unknown", op);
 	}
 	regs_n = regs_off;
 	regs_off = regs_off1;
