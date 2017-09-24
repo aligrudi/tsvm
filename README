@@ -5,8 +5,8 @@ This is a simple virtual machine for the intermediate code of TSLANG
 (The Simple Language), written for an undergraduate compiler course.
 Students are required to write a compiler for TSLANG to generate
 TSLANG IR.  As optional projects, students may optimise the size of
-the generated code, write a back end pass, or generate machine code
-from TSLANG IR.
+the generated code, write an optimization pass, or generate machine
+code from TSLANG IR.
 
 TSLANG IR
 =========
@@ -32,8 +32,8 @@ instruction (the same register that holds the first argument).  In the
 following program, sum3 returns the sum of its three argument.
 
   proc sum3
-    add r0, r1, r2
-    add r0, r0, r3
+    add r0, r0, r1
+    add r0, r0, r2
     ret
   proc main
     call iget, r3
