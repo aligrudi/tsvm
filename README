@@ -45,7 +45,7 @@ following program, sum3 returns the sum of its three argument.
     ret
 
 TSLANG IR instructions include mov, add, sub, mul, div, mod, cmp<,
-cmp>, cmp==, cmp<=, cmp>=, get, put, ret, call, jmp, jz, jnz.  See the
+cmp>, cmp==, cmp<=, cmp>=, ld, st, ret, call, jmp, jz, jnz.  See the
 files in the test/ directory for more examples.
 
 BUILTIN PROCEDURES
@@ -68,14 +68,14 @@ The mem builtin procedure allocates a memory region with the size
 specified as its first argument and returns its address.  The rel
 instruction frees the given memory region.  The following program
 allocates 32 bytes of memory and releases it.  It also demonstrates
-get and put instructions for accessing the memory region.
+ld and st instructions for accessing the memory region.
 
   proc main
     mov  r1, 32
     call mem, r1
     mov  r2, 5
-    put  r1, r2		# write r2 to *r1
-    get  r3, r1		# read r3 from *r1
+    st   r2, r1		# write r2 to *r1
+    ld   r3, r1		# read r3 from *r1
     call rel, r1
     mov  r0, 0
     ret

@@ -331,12 +331,12 @@ static int execproc(char *name)
 				regset(r0, regget(r1) == regget(r2));
 			continue;
 		}
-		if (!strcmp("get", op)) {		/* read from memory */
+		if (!strcmp("ld", op)) {		/* read from memory */
 			regset(r0, *(long *) regget(r1));
 			continue;
 		}
-		if (!strcmp("put", op)) {		/* write to memory */
-			*(long *) regget(r0) = regget(r1);
+		if (!strcmp("st", op)) {		/* write to memory */
+			*(long *) regget(r1) = regget(r0);
 			continue;
 		}
 		if (!strcmp("nop", op))

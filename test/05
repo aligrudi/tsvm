@@ -6,16 +6,16 @@ proc main
 	# writing
 	mov r3, r0
 	mov r4, 2
-	put r3, r4
+	st  r4, r3
 	mov r5, 8
 	add r3, r3, r5
 	mov r6, 3
-	put r3, r6
+	st r6, r3
 	# reading
 	mov r3, r0
-	get r7, r3
+	ld  r7, r3
 	add r3, r3, r5
-	get r8, r3
+	ld  r8, r3
 	add r7, r7, r8
 	call iput, r7
 	call rel, r0
