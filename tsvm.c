@@ -1,5 +1,5 @@
 /*
- * TSLANG INTERMEDIATE CODE VIRTUAL MACHINE
+ * TSVM: TSLANG INTERMEDIATE REPRESENTATION VIRTUAL MACHINE
  *
  * Copyright (C) 2017 Ali Gholami Rudi
  *
@@ -26,14 +26,14 @@
 
 #define MAX(a, b)	((a) < (b) ? (b) : (a))
 
-/* TSLANG instructions */
+/* TSIR instructions */
 struct tsop {
 	char op[NCHRS];			/* operation name */
 	char args[NARGS][NCHRS];	/* operands */
 	int lnum;			/* line number */
 };
 
-/* TSLANG labels and procedures */
+/* TSIR labels and procedures */
 struct tsloc {
 	char name[NCHRS];		/* name */
 	long pos;			/* code position */
