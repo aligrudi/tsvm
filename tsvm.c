@@ -163,6 +163,16 @@ static void *mextend(void *old, long oldsz, long newsz, int memsz)
 	return new;
 }
 
+/* find the position of a label or procedure */
+static int locs_find(char *name)
+{
+	int i;
+	for (i = 0; i < locs_n; i++)
+		if (!strcmp(locs[i].name, name))
+			return locs[i].pos;
+	return -1;
+}
+
 /* read the input source program */
 static int readprogram(void)
 {
@@ -179,6 +189,8 @@ static int readprogram(void)
 		if (cmd[strlen(cmd) - 1] == ':') {
 			locs[locs_n].pos = code_n;
 			cmd[strlen(cmd) - 1] = '\0';
+			if (locs_find(cmd) >= 0)
+				die("label %s redefined", cmd);
 			strcpy(locs[locs_n].name, cmd);
 			locs_n++;
 		} else if (!strcmp("proc", cmd)) {
@@ -194,16 +206,6 @@ static int readprogram(void)
 		}
 	}
 	return 0;
-}
-
-/* find the position of a label or procedure */
-static int locs_find(char *name)
-{
-	int i;
-	for (i = 0; i < locs_n; i++)
-		if (!strcmp(locs[i].name, name))
-			return locs[i].pos;
-	return -1;
 }
 
 /* read the identifier of a register; for instance 3 for "r3" */
