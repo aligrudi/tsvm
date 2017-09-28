@@ -252,7 +252,7 @@ static void regset(int r, long val)
 }
 
 /* tsvm builtin functions */
-static int execproc_builtin(char *name)
+static int execproc_builtin(char *name, int argc)
 {
 	long val;
 	if (!strcmp("iget", name)) {		/* read a word */
@@ -276,7 +276,7 @@ static int execproc_builtin(char *name)
 }
 
 /* execute a procedure */
-static int execproc(char *name)
+static int execproc(char *name, int argc)
 {
 	int ip = locs_find(name);
 	int r0, r1, r2;
@@ -286,6 +286,7 @@ static int execproc(char *name)
 	if (ip < 0)
 		die("procedure %s not found", name);
 	regs_off = regs_n;
+	regs_n += argc;
 	for (; ip < code_n; ip++) {
 		char *op = code[ip].op;
 		fp_lnum = code[ip].lnum;
@@ -348,10 +349,12 @@ static int execproc(char *name)
 				int r = regnum(code[ip].args[i]);
 				if (r >= 0)
 					regset_direct(regs_n + i - 1, regget(r));
+				else
+					break;
 			}
 			stat_call++;
-			if (execproc_builtin(code[ip].args[0]))
-				execproc(code[ip].args[0]);
+			if (execproc_builtin(code[ip].args[0], i - 1))
+				execproc(code[ip].args[0], i - 1);
 			if (r1 >= 0)
 				regset(r1, regget_direct(regs_n));
 			continue;
@@ -406,7 +409,7 @@ int main(int argc, char *argv[])
 	}
 	readprogram();
 	fclose(fp);
-	ret = execproc("main");
+	ret = execproc("main", 0);
 	if (showstat)
 		fprintf(stderr, "%d\t%d\t%d\t%d\n",
 				code_n, stat_all, stat_call, stat_jmp);

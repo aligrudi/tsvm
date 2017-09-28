@@ -1,0 +1,12 @@
+proc sum3
+	call iput, r0
+	call iput, r1
+	call iput, r2
+	ret
+proc main
+	call iget, r3
+	call iget, r1
+	call iget, r2
+	call sum3, r3, r1, r2
+	mov r0, 0
+	ret
