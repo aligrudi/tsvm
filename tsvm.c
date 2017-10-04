@@ -377,6 +377,8 @@ static int execproc(char *name, int argc)
 		}
 		die("instruction %s unknown", op);
 	}
+	if (ip == code_n)
+		die("leaving %s without a ret", name);
 	regs_n = regs_off;
 	regs_off = regs_off1;
 	return 0;
