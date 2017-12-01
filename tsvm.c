@@ -271,7 +271,7 @@ static int execproc_builtin(char *name, int argc)
 		return 0;
 	}
 	if (!strcmp("rel", name)) {		/* release memory */
-		free(malloc(regget_direct(regs_n)));
+		free((void *) regget_direct(regs_n));
 		return 0;
 	}
 	return 1;
